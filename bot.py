@@ -10,6 +10,8 @@ from binanceparser import *
 with open('config.json', 'r') as configfile:
     config = json.load(configfile)
     BOT_TOKEN = config['bot_token']
+    global fiat
+    fiat = config['fiat']
 
 
 async def showMerchants(callback_query: types.CallbackQuery, state: FSMContext):
@@ -20,19 +22,19 @@ async def showMerchants(callback_query: types.CallbackQuery, state: FSMContext):
     else:
         await state.update_data(asset=callback_query.data)
     savedChoices = await state.get_data()
-    topMerchants = await getTopMerchants(savedChoices['tradeType'], savedChoices['asset'], 'RUB', 5, 'Tinkoff')
-    spread = await getTickerSpread(savedChoices['asset'], 'RUB', 'Tinkoff')
-    actualTickerPrice = await getTickerPrice(savedChoices['asset'], 'RUB')
+    topMerchants = await getTopMerchants(savedChoices['tradeType'], savedChoices['asset'], fiat, 5, 'Tinkoff')
+    spread = await getTickerSpread(savedChoices['asset'], fiat, 'Tinkoff')
+    actualTickerPrice = await getTickerPrice(savedChoices['asset'], fiat)
     if savedChoices['tradeType'] == 'buy':
-        editedtext = '*🟢 '+savedChoices['asset'] + '* покупка\n' + 'Цена на бирже: *'+str(actualTickerPrice)+' RUB*\n' + f'Спред: *{spread}*\n\n'
+        editedtext = '*🟢 '+savedChoices['asset'] + '* покупка\n' + 'Цена на бирже: *'+str(actualTickerPrice)+f' {fiat}*\n' + f'Спред: *{spread}*\n\n'
     else:
-        editedtext = '*🔴 '+savedChoices['asset'] + '* продажа\n' + 'Цена на бирже: *'+str(actualTickerPrice)+' RUB*\n' + f'Спред: *{spread}*\n\n'
+        editedtext = '*🔴 '+savedChoices['asset'] + '* продажа\n' + 'Цена на бирже: *'+str(actualTickerPrice)+f' {fiat}*\n' + f'Спред: *{spread}*\n\n'
     for merchant in enumerate(topMerchants):
         percentdiff = ((merchant[1] / actualTickerPrice)-1)*100
         if percentdiff > 0:
-            editedtext += str(merchant[0]+1) + ') '+str(merchant[1])+' RUB (+'+str(round(percentdiff, 1))+'%)\n\n'
+            editedtext += str(merchant[0]+1) + ') '+str(merchant[1])+f' {fiat} (+'+str(round(percentdiff, 1))+'%)\n\n'
         else:
-            editedtext += str(merchant[0]+1) + ') '+str(merchant[1])+' RUB ('+str(round(percentdiff, 1))+'%)\n\n'
+            editedtext += str(merchant[0]+1) + ') '+str(merchant[1])+f' {fiat} ('+str(round(percentdiff, 1))+'%)\n\n'
     kb = InlineKeyboardMarkup()
     buttonRenew = InlineKeyboardButton(text="Обновить",  callback_data=savedChoices['asset'])
     if savedChoices['tradeType'] == 'buy':
@@ -51,7 +53,7 @@ async def showMerchants(callback_query: types.CallbackQuery, state: FSMContext):
 async def chooseAsset(callback_query: types.CallbackQuery, state: FSMContext):
     await bot.answer_callback_query(callback_query.id)
     await state.update_data(tradeType=callback_query.data)
-    spreads = await getTickersSpreads(["USDT", "BTC", "BUSD", "BNB", "ETH", "SHIB"], 'RUB', 'Tinkoff')
+    spreads = await getTickersSpreads(["USDT", "BTC", "BUSD", "BNB", "ETH", "SHIB"], fiat, 'Tinkoff')
     editedtext = "*Выберите монету:*"
     kb = InlineKeyboardMarkup()
     button1 = InlineKeyboardButton(text="USDT "+spreads["USDT"],  callback_data="USDT")
