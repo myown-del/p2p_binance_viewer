@@ -1,5 +1,5 @@
 # Telegram bot Binance P2P viewer
-This telegram bot show data about top merchants on Binance P2P.
+This telegram bot show info about top merchants on Binance P2P.
 
 ![bot](https://i.ibb.co/CsZf8gN/image.png)
 
